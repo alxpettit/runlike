@@ -1,29 +1,22 @@
 use nix::unistd::Pid;
+use snafu::prelude::*;
+use snafu::Whatever;
 use std::env;
 use std::ffi::OsString;
 use std::fs;
 use std::os::unix::prelude::CommandExt;
 use std::process::{exit, Command};
 
-fn main() {
+fn main() -> Result<(), Whatever> {
     match env::args().collect::<Vec<String>>().as_slice() {
         [_, pid_str, child_program, child_args @ ..] => {
-            let pid = match pid_str.parse::<i32>() {
-                Ok(value) => Pid::from_raw(value),
-                Err(_) => {
-                    eprintln!("Invalid PID");
-                    exit(1);
-                }
-            };
+            let pid = pid_str
+                .parse::<i32>()
+                .with_whatever_context(|_| format!("Invalid PID: {}", pid_str))?;
 
             let env_path = format!("/proc/{}/environ", pid);
-            let env_vars = match fs::read_to_string(&env_path) {
-                Ok(content) => content,
-                Err(_) => {
-                    eprintln!("Failed to read environment variables");
-                    exit(1);
-                }
-            };
+            let env_vars = fs::read_to_string(&env_path)
+                .with_whatever_context(|_| format!("Failed to read from file"))?;
 
             for env_var in env_vars.split('\0') {
                 if let Some(equal_index) = env_var.find('=') {
@@ -40,4 +33,5 @@ fn main() {
             exit(1);
         }
     }
+    Ok(())
 }
