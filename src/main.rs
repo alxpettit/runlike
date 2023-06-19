@@ -11,7 +11,7 @@ fn main() -> Result<(), Whatever> {
     let args_string: Vec<String> = env::args().collect();
     let args_str: Vec<&str> = args_string.iter().map(AsRef::as_ref).collect();
     match &args_str[..] {
-        [_self, "--help"] => {
+        [_self, "--help"] | [_self, "-h"] => {
             eprintln!("Usage: runlike <pid> <command> [<arg1> <arg2> ...]");
         }
         [_self, pid_str, child_program, child_args @ ..] => {
