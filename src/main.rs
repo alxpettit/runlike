@@ -29,7 +29,7 @@ fn main() -> Result<(), Whatever> {
             Command::new(child_program).args(&child_args).exec();
         }
         _ => {
-            eprintln!("Usage: <program> <pid> <command> [<arg1> <arg2> ...]");
+            eprintln!("Usage: runlike <pid> <command> [<arg1> <arg2> ...]");
             exit(1);
         }
     }
