@@ -1,3 +1,4 @@
+use libc::setuid;
 use snafu::prelude::*;
 use snafu::Whatever;
 use std::env;
@@ -6,15 +7,22 @@ use std::fs;
 use std::os::unix::prelude::CommandExt;
 use std::process::Command;
 
+fn how_to_use() {
+    eprintln!("Usage: runlike <uid> <pid> <command> [<arg1> <arg2> ...]");
+}
 #[snafu::report]
 fn main() -> Result<(), Whatever> {
     let args_string: Vec<String> = env::args().collect();
     let args_str: Vec<&str> = args_string.iter().map(AsRef::as_ref).collect();
     match &args_str[..] {
         [_self, "--help"] | [_self, "-h"] => {
-            eprintln!("Usage: runlike <pid> <command> [<arg1> <arg2> ...]");
+            how_to_use();
         }
-        [_self, pid_str, child_program, child_args @ ..] => {
+        [_self, uid_str, pid_str, child_program, child_args @ ..] => {
+            let uid = uid_str
+                .parse::<u32>()
+                .with_whatever_context(|_| format!("Invalid UID: {}", uid_str))?;
+
             let pid = pid_str
                 .parse::<i32>()
                 .with_whatever_context(|_| format!("Invalid PID: {}", pid_str))?;
@@ -31,10 +39,16 @@ fn main() -> Result<(), Whatever> {
             }
 
             let child_args: Vec<OsString> = child_args.iter().map(|arg| arg.into()).collect();
+
+            unsafe {
+                if setuid(uid) != 0 {
+                    whatever!("Failed to call setuid.");
+                }
+            }
             Command::new(child_program).args(&child_args).exec();
         }
         _ => {
-            eprintln!("Usage: runlike <pid> <command> [<arg1> <arg2> ...]");
+            how_to_use();
             whatever!("Wrong number of args. Provided: {}", args_str.len() - 1);
         }
     }
