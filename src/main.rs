@@ -8,8 +8,8 @@ use std::process::Command;
 
 #[snafu::report]
 fn main() -> Result<(), Whatever> {
-    let args: Vec<String> = env::args().collect();
-    let args_str: Vec<&str> = args.iter().map(AsRef::as_ref).collect();
+    let args_string: Vec<String> = env::args().collect();
+    let args_str: Vec<&str> = args_string.iter().map(AsRef::as_ref).collect();
     match &args_str[..] {
         [_self, "--help"] => {
             eprintln!("Usage: runlike <pid> <command> [<arg1> <arg2> ...]");
