@@ -1,10 +1,12 @@
+// TODO: add linux capabilities
+
 use clap::Parser;
 use snafu::prelude::*;
 use snafu::Whatever;
 use std::env;
 use std::os::unix::prelude::CommandExt;
 use std::process::Command;
-use sysinfo::{Pid, ProcessExt, System, SystemExt};
+use sysinfo::{Pid, ProcessExt, System, SystemExt, UserExt};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -26,32 +28,26 @@ fn main() -> Result<(), Whatever> {
         .with_whatever_context(|| format!("Could not find process with ID: {}", args.pid))?;
 
     let uid = process
-        .user_id()
+        .effective_user_id()
         .with_whatever_context(|| format!("Unable to retrieve UID of process: {:?}", process))?;
 
-    let gid = process
-        .group_id()
-        .with_whatever_context(|| format!("Unable to retrieve GID of process: {:?}", process))?;
+    let user = sys
+        .get_user_by_id(uid)
+        .with_whatever_context(|| format!("Could not resolve user name from ID: {:?}", uid))?;
+
+    privdrop::PrivDrop::default()
+        .user(user.name())
+        .group_list(user.groups())
+        .apply()
+        .with_whatever_context(|_| {
+            format!("Could not set privs to match target user: {}", user.name())
+        })?;
 
     for env_var in process.environ() {
         if let Some(equal_index) = env_var.find('=') {
             let (key, value) = env_var.split_at(equal_index);
             env::set_var(key, &value[1..]);
         }
-    }
-    let uid_out = unsafe { libc::setuid(**uid) };
-    if uid_out != 0 {
-        eprintln!(
-            "WARNING: Failed to setuid for UID: {:?}: setuid() = {}",
-            uid, uid_out
-        );
-    }
-    let gid_out = unsafe { libc::setgid(*gid) };
-    if gid_out != 0 {
-        eprintln!(
-            "WARNING: Failed to setgid for GID: {:?} setgid() = {}",
-            gid, gid_out
-        );
     }
 
     Command::new(args.child_exe).args(args.child_args).exec();
