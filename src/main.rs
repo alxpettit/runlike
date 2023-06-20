@@ -14,10 +14,10 @@ use sysinfo::{Pid, Process, ProcessExt, System, SystemExt, User, UserExt};
 struct Args {
     #[arg(short, long)]
     pid: Option<Pid>,
+    // #[clap(required = true)]
+    // child_exe: String,
     #[clap(required = true)]
-    child_exe: String,
-    #[clap(required = false)]
-    child_args: Vec<String>,
+    cmd: Vec<String>,
 }
 
 const DETECTED_ENTRYPOINTS: &'static [&'static str] = &[".startplasma-wa", ".startplasma-x1"];
@@ -47,7 +47,7 @@ fn get_user_from_proc<'a>(sys: &'a System, process: &Process) -> Result<&'a User
 
 #[snafu::report]
 fn main() -> Result<(), Whatever> {
-    let args = Args::parse();
+    let mut args = Args::parse();
     let sys = System::new_all();
 
     let process = match args.pid {
@@ -76,7 +76,7 @@ fn main() -> Result<(), Whatever> {
         }
     }
 
-    Command::new(args.child_exe).args(args.child_args).exec();
+    Command::new(&args.cmd[0]).args(&args.cmd[1..]).exec();
 
     Ok(())
 }
