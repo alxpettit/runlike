@@ -39,14 +39,19 @@ fn main() -> Result<(), Whatever> {
             env::set_var(key, &value[1..]);
         }
     }
-
-    unsafe {
-        if libc::setuid(**uid) != 0 {
-            whatever!("Failed to setuid for UID: {:?}", uid);
-        }
-        if libc::setgid(*gid) != 0 {
-            whatever!("Failed to setgid for GID: {:?}", gid);
-        }
+    let uid_out = unsafe { libc::setuid(**uid) };
+    if uid_out != 0 {
+        eprintln!(
+            "WARNING: Failed to setuid for UID: {:?}: setuid() = {}",
+            uid, uid_out
+        );
+    }
+    let gid_out = unsafe { libc::setgid(*gid) };
+    if gid_out != 0 {
+        eprintln!(
+            "WARNING: Failed to setgid for GID: {:?} setgid() = {}",
+            gid, gid_out
+        );
     }
 
     Command::new(args.child_exe).args(args.child_args).exec();
