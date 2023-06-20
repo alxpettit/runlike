@@ -44,7 +44,7 @@ fn main() -> Result<(), Whatever> {
         if libc::setuid(**uid) != 0 {
             whatever!("Failed to setuid for UID: {:?}", uid);
         }
-        if libc::setgid(*gid) == 0 {
+        if libc::setgid(*gid) != 0 {
             whatever!("Failed to setgid for GID: {:?}", gid);
         }
     }
