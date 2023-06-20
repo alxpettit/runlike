@@ -1,4 +1,5 @@
 // TODO: add linux capabilities
+// TODO: autodetect entrypoints besides KDE plasma ones
 
 use clap::Parser;
 use snafu::prelude::*;
