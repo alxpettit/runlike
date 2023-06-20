@@ -19,11 +19,19 @@ struct Args {
     child_args: Vec<String>,
 }
 
-// startplasma-wayland
-// startplasma-x11
+const DETECTED_ENTRYPOINTS: &'static [&'static str] = &[".startplasma-wa", ".startplasma-x1"];
 
 fn detect_process<'a>(sys: &'a System) -> Result<&'a Process, Whatever> {
-    // for (pid, process) in sys.processes() {}
+    for (_, process) in sys.processes() {
+        println!("{}", process.name());
+
+        for entrypoint in DETECTED_ENTRYPOINTS {
+            // println!("{{}", entrypoint, process.name());
+            if process.name().starts_with(entrypoint) {
+                return Ok(process);
+            }
+        }
+    }
 
     Err(whatever!("sdssd"))
 }
