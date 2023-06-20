@@ -20,20 +20,17 @@ struct Args {
 }
 
 const DETECTED_ENTRYPOINTS: &'static [&'static str] = &[".startplasma-wa", ".startplasma-x1"];
-
 fn detect_process<'a>(sys: &'a System) -> Result<&'a Process, Whatever> {
     for (_, process) in sys.processes() {
-        println!("{}", process.name());
-
-        for entrypoint in DETECTED_ENTRYPOINTS {
-            // println!("{{}", entrypoint, process.name());
-            if process.name().starts_with(entrypoint) {
-                return Ok(process);
-            }
+        if DETECTED_ENTRYPOINTS.contains(&process.name()) {
+            return Ok(process);
         }
     }
 
-    Err(whatever!("sdssd"))
+    whatever!(
+        "Could not automatically detect process with name() matching: {:?}",
+        DETECTED_ENTRYPOINTS
+    )
 }
 
 fn get_user_from_proc<'a>(sys: &'a System, process: &Process) -> Result<&'a User, Whatever> {
