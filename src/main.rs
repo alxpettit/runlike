@@ -1,5 +1,5 @@
 // TODO: add linux capabilities
-// TODO: autodetect entrypoints besides KDE plasma ones
+// TODO: add more entrypoints
 
 use clap::Parser;
 use snafu::prelude::*;
@@ -14,8 +14,6 @@ use sysinfo::{Pid, Process, ProcessExt, System, SystemExt, User, UserExt};
 struct Args {
     #[arg(short, long)]
     pid: Option<Pid>,
-    // #[clap(required = true)]
-    // child_exe: String,
     #[clap(required = true)]
     cmd: Vec<String>,
 }
